@@ -16,6 +16,7 @@ ARG RESTY_OPENSSL_VERSION="1.1.1i"
 ARG RESTY_OPENSSL_PATCH_VERSION="1.1.1f"
 ARG RESTY_OPENSSL_URL_BASE="https://www.openssl.org/source"
 ARG RESTY_PCRE_VERSION="8.44"
+ARG NGINX_UPLOAD_MODULE_VERSION="2.3.0"
 ARG RESTY_J="1"
 ARG RESTY_CONFIG_OPTIONS="\
     --with-compat \
@@ -48,7 +49,7 @@ ARG RESTY_CONFIG_OPTIONS="\
     --with-stream_ssl_module \
     --with-threads \
     "
-ARG RESTY_CONFIG_OPTIONS_MORE=""
+ARG RESTY_CONFIG_OPTIONS_MORE="--add-module=/tmp/nginx-upload-module-${NGINX_UPLOAD_MODULE_VERSION}"
 ARG RESTY_LUAJIT_OPTIONS="--with-luajit-xcflags='-DLUAJIT_NUMMODE=2 -DLUAJIT_ENABLE_LUA52COMPAT'"
 
 ARG RESTY_ADD_PACKAGE_BUILDDEPS=""
@@ -134,6 +135,9 @@ RUN apk add --no-cache --virtual .build-deps \
     && make -j${RESTY_J} \
     && make -j${RESTY_J} install \
     && cd /tmp \
+    && curl -fSL https://github.com/fdintino/nginx-upload-module/archive/refs/tags/${NGINX_UPLOAD_MODULE_VERSION}.tar.gz -o nginx-upload-module-${NGINX_UPLOAD_MODULE_VERSION}.tar.gz \
+    && tar xzf nginx-upload-module-${NGINX_UPLOAD_MODULE_VERSION}.tar.gz \
+    && cd /tmp \
     && curl -fSL https://openresty.org/download/openresty-${RESTY_VERSION}.tar.gz -o openresty-${RESTY_VERSION}.tar.gz \
     && tar xzf openresty-${RESTY_VERSION}.tar.gz \
     && cd /tmp/openresty-${RESTY_VERSION} \
@@ -146,6 +150,7 @@ RUN apk add --no-cache --virtual .build-deps \
         openssl-${RESTY_OPENSSL_VERSION}.tar.gz openssl-${RESTY_OPENSSL_VERSION} \
         pcre-${RESTY_PCRE_VERSION}.tar.gz pcre-${RESTY_PCRE_VERSION} \
         openresty-${RESTY_VERSION}.tar.gz openresty-${RESTY_VERSION} \
+	nginx-upload-module-${NGINX_UPLOAD_MODULE_VERSION}.tar.gz nginx-upload-module-${NGINX_UPLOAD_MODULE_VERSION} \
     && apk del .build-deps \
     && mkdir -p /var/run/openresty \
     && ln -sf /dev/stdout /usr/local/openresty/nginx/logs/access.log \
